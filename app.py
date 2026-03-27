@@ -45,7 +45,7 @@ def load_data(ticker: str, start: date, end: date) -> pd.DataFrame:
 # -- Main logic -------------------------------------------
 if ticker:
     try:
-        df = load_data(ticker)
+        df = load_data(ticker, start_date, end_date)
     except Exception as e:
         st.error(f"Failed to download data: {e}")
         st.stop()
@@ -72,7 +72,7 @@ if ticker:
     max_close = float(df["Close"].max())
     min_close = float(df["Close"].min())
 
-    st.subheader(f"{ticker} — Key Metrics (Past 12 Months)")
+    st.subheader(f"{ticker} — Key Metrics")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Latest Close", f"${latest_close:,.2f}")
@@ -80,13 +80,13 @@ if ticker:
     col3.metric("Annualized Volatility (sigma)", f"{ann_volatility:.2%}")
 
     col4, col5, _ = st.columns(3)
-    col4.metric("12-Month High", f"${max_close:,.2f}")
-    col5.metric("12-Month Low", f"${min_close:,.2f}")
-
+    col4.metric("Period High", f"${max_close:,.2f}")
+    col5.metric("Period Low", f"${min_close:,.2f}")
+    
     st.divider()
 
     # -- Price chart --------------------------------------
-    st.subheader("Closing Price — Past 12 Months")
+    st.subheader("Closing Price")
 
     fig = go.Figure()
     fig.add_trace(
