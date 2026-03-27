@@ -22,6 +22,11 @@ st.sidebar.header("Settings")
 
 ticker = st.sidebar.text_input("Stock Ticker", value="AAPL").upper().strip()
 
+# Rolling volatility window
+vol_window = st.sidebar.slider(
+    "Rolling Volatility Window (days)", min_value=10, max_value=120, value=30, step=5
+)
+
 # Default date range: one year back from today
 default_start = date.today() - timedelta(days=365)
 start_date = st.sidebar.date_input("Start Date", value=default_start)
@@ -75,6 +80,7 @@ if ticker:
     df["Daily Return"] = df["Close"].pct_change()
     df[f"{ma_window}-Day MA"] = df["Close"].rolling(window=ma_window).mean()
     df["Cumulative Return"] = (1 + df["Daily Return"]).cumprod() - 1
+    df["Rolling Volatility"] = df["Daily Return"].rolling(window=vol_window).std() * math.sqrt(252)
 
     if ma_window > len(df):
         st.warning(
@@ -113,7 +119,7 @@ if ticker:
     col9, col10, _, _ = st.columns(4)
     col9.metric("Period High", f"${max_close:,.2f}")
     col10.metric("Period Low", f"${min_close:,.2f}")
-        
+
     st.divider()
 
     # -- Price chart --------------------------------------
@@ -186,6 +192,23 @@ if ticker:
         xaxis_title="Date", template="plotly_white", height=400
     )
     st.plotly_chart(fig_cum, width="stretch")
+
+    # -- Rolling volatility chart -------------------------
+    st.subheader("Rolling Annualized Volatility")
+
+    fig_roll_vol = go.Figure()
+    fig_roll_vol.add_trace(
+        go.Scatter(
+            x=df.index, y=df["Rolling Volatility"],
+            mode="lines", name=f"{vol_window}-Day Rolling Vol",
+            line=dict(color="crimson", width=1.5)
+        )
+    )
+    fig_roll_vol.update_layout(
+        yaxis_title="Annualized Volatility", yaxis_tickformat=".0%",
+        xaxis_title="Date", template="plotly_white", height=400
+    )
+    st.plotly_chart(fig_roll_vol, width="stretch")
 
     # -- Raw data (expandable) ----------------------------
     with st.expander("View Raw Data"):
