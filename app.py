@@ -22,15 +22,23 @@ st.sidebar.header("Settings")
 
 ticker = st.sidebar.text_input("Stock Ticker", value="AAPL").upper().strip()
 
+# Default date range: one year back from today
+default_start = date.today() - timedelta(days=365)
+start_date = st.sidebar.date_input("Start Date", value=default_start)
+end_date = st.sidebar.date_input("End Date", value=date.today())
+
+# Validate that the date range makes sense
+if start_date >= end_date:
+    st.sidebar.error("Start date must be before end date.")
+    st.stop()
+
 # -- Data download ----------------------------------------
 # We wrap the download in st.cache_data so repeated runs with
 # the same inputs don't re-download every time. The ttl (time-to-live)
 # ensures the cache expires after one hour so data stays fresh.
 @st.cache_data(show_spinner="Fetching data...", ttl=3600)
-def load_data(ticker: str) -> pd.DataFrame:
-    """Download the most recent year of daily data from Yahoo Finance."""
-    end = date.today()
-    start = end - timedelta(days=365)
+def load_data(ticker: str, start: date, end: date) -> pd.DataFrame:
+    """Download daily data from Yahoo Finance for a given date range."""
     df = yf.download(ticker, start=start, end=end, progress=False)
     return df
 
